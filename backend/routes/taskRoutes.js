@@ -12,8 +12,8 @@ const { validateTask } = require("../middleware/validation");
 const router = express.Router();
 
 router.post("/tasks", createTask, validateTask);
-router.post("/tasks", getTasks);
-router.post("/tasks/:id", updateTask, validateTask);
-router.post("/tasks/:id", deleteTask);
+router.get("/tasks", getTasks);
+router.put("/tasks/:id", updateTask, validateTask);
+router.delete("/tasks/:id", deleteTask, validateTask);
 
 module.exports = router;
