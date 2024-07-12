@@ -84,7 +84,18 @@ const Tasks = () => {
                       </span>
                     </Tooltip>
                   </div>
-                  <div className="whitespace-pre">{task.description}</div>
+                  <div className="whitespace-pre">
+                    <span className="font-medium">Title: </span>
+                    {task.title}
+                  </div>
+                  <div className="whitespace-pre">
+                    <span className="font-medium">Description: </span>
+                    {task.description}
+                  </div>
+                  <div className="whitespace-pre">
+                    <span className="font-medium">Status: </span>
+                    {task.status}
+                  </div>
                 </div>
               ))
             )}

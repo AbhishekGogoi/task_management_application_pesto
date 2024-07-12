@@ -16,7 +16,9 @@ const Task = () => {
   const mode = taskId === undefined ? "add" : "update";
   const [task, setTask] = useState(null);
   const [formData, setFormData] = useState({
+    title: "",
     description: "",
+    status: "To Do",
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -33,7 +35,11 @@ const Task = () => {
       };
       fetchData(config, { showSuccessToast: false }).then((data) => {
         setTask(data.task);
-        setFormData({ description: data.task.description });
+        setFormData({
+          title: data.task.title,
+          description: data.task.description,
+          status: data.task.status,
+        });
       });
     }
   }, [mode, authState, taskId, fetchData]);
@@ -48,7 +54,9 @@ const Task = () => {
   const handleReset = (e) => {
     e.preventDefault();
     setFormData({
+      title: task.title,
       description: task.description,
+      status: task.status,
     });
   };
 
@@ -110,6 +118,17 @@ const Task = () => {
                 {mode === "add" ? "Add New Task" : "Edit Task"}
               </h2>
               <div className="mb-4">
+                <label className="block text-gray-700">Title</label>
+                <input
+                  type="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded mt-2"
+                />
+                {fieldError("title")}
+              </div>
+              <div className="mb-4">
                 <label htmlFor="description">Description</label>
                 <Textarea
                   type="description"
@@ -121,7 +140,20 @@ const Task = () => {
                 />
                 {fieldError("description")}
               </div>
-
+              <div className="mb-4">
+                <label className="block text-gray-700">Status</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded mt-2"
+                >
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Done">Done</option>
+                </select>
+                {fieldError("status")}
+              </div>
               <button
                 className="bg-primary text-white px-4 py-2 font-medium hover:bg-primary-dark"
                 onClick={handleSubmit}
