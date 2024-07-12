@@ -1,75 +1,135 @@
 const Task = require("../models/taskModel");
+const { validateObjectId } = require("../utils/validation");
 
-//create a new task
-exports.createTask = async (req, res) => {
-  try {
-    const { title, description, status } = req.body;
-    const newTask = new Task({ title, description, status });
-    await newTask.save();
-    res.status(201).json(newTask);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to create task", error: error.message });
-  }
-};
-
-//Get all tasks with optional status filter
 exports.getTasks = async (req, res) => {
   try {
-    const { status } = req.query;
-    const filter = status ? { status } : {};
-    const tasks = await Task.find(filter);
-    res.status(200).json(tasks);
-  } catch (error) {
+    const tasks = await Task.find({ user: req.user.id });
     res
+      .status(200)
+      .json({ tasks, status: true, msg: "Tasks found successfully.." });
+  } catch (err) {
+    console.error(err);
+    return res
       .status(500)
-      .json({ message: "Failed to retrieve tasks", error: error.message });
+      .json({ status: false, msg: "Internal Server Error" });
   }
 };
 
-//Update a task by ID
-exports.updateTask = async (req, res) => {
+exports.getTask = async (req, res) => {
   try {
-    const { id } = req.params;
+    if (!validateObjectId(req.params.taskId)) {
+      return res.status(400).json({ status: false, msg: "Task id not valid" });
+    }
+
+    const task = await Task.findOne({
+      user: req.user.id,
+      _id: req.params.taskId,
+    });
+    if (!task) {
+      return res.status(400).json({ status: false, msg: "No task found.." });
+    }
+    res
+      .status(200)
+      .json({ task, status: true, msg: "Task found successfully.." });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ status: false, msg: "Internal Server Error" });
+  }
+};
+
+exports.postTask = async (req, res) => {
+  try {
     const { title, description, status } = req.body;
-    const updatedTask = await Task.findByIdAndUpdate(
-      id,
-      { title, description, status },
+    if (!title || !description) {
+      return res.status(400).json({
+        status: false,
+        msg: "Title and description of task are required",
+      });
+    }
+    const task = await Task.create({ user: req.user.id, description });
+    res
+      .status(200)
+      .json({ task, status: true, msg: "Task created successfully.." });
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ status: false, msg: "Internal Server Error" });
+  }
+};
+
+exports.putTask = async (req, res) => {
+  try {
+    const { title, description, status } = req.body;
+    if (!title || !description) {
+      return res
+        .status(400)
+        .json({
+          status: false,
+          msg: "Title and description of task are required",
+        });
+    }
+
+    if (!validateObjectId(req.params.taskId)) {
+      return res.status(400).json({ status: false, msg: "Task id not valid" });
+    }
+
+    let task = await Task.findById(req.params.taskId);
+    if (!task) {
+      return res
+        .status(400)
+        .json({ status: false, msg: "Task with given id not found" });
+    }
+
+    if (task.user != req.user.id) {
+      return res
+        .status(403)
+        .json({ status: false, msg: "You can't update task of another user" });
+    }
+
+    task = await Task.findByIdAndUpdate(
+      req.params.taskId,
+      { description },
       { new: true }
     );
-    if (!updatedTask) {
-      return res.status(404).json({ message: "Task not found" });
-    }
-    res.status(200).json(updatedTask);
-  } catch (error) {
     res
+      .status(200)
+      .json({ task, status: true, msg: "Task updated successfully.." });
+  } catch (err) {
+    console.error(err);
+    return res
       .status(500)
-      .json({ message: "Failed to update task", error: error.message });
+      .json({ status: false, msg: "Internal Server Error" });
   }
 };
 
-//Delete a task by ID
-// Delete a task by ID
 exports.deleteTask = async (req, res) => {
   try {
-    const { id } = req.params;
+    if (!validateObjectId(req.params.taskId)) {
+      return res.status(400).json({ status: false, msg: "Task id not valid" });
+    }
 
-    const task = await Task.findById(id);
+    let task = await Task.findById(req.params.taskId);
     if (!task) {
-      return res.status(404).json({ message: "Task not found" });
+      return res
+        .status(400)
+        .json({ status: false, msg: "Task with given id not found" });
     }
 
-    const deletedTask = await Task.findByIdAndDelete(id);
-    if (!deletedTask) {
-      return res.status(500).json({ message: "Failed to delete task" });
+    if (task.user != req.user.id) {
+      return res
+        .status(403)
+        .json({ status: false, msg: "You can't delete task of another user" });
     }
 
-    res.status(200).json({ message: "Task deleted successfully" });
-  } catch (error) {
-    console.error(`Failed to delete task: ${error.message}`); // Log the error
-    res
+    await Task.findByIdAndDelete(req.params.taskId);
+    res.status(200).json({ status: true, msg: "Task deleted successfully.." });
+  } catch (err) {
+    console.error(err);
+    return res
       .status(500)
-      .json({ message: "Failed to delete task", error: error.message });
+      .json({ status: false, msg: "Internal Server Error" });
   }
 };

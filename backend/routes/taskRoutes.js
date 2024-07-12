@@ -1,19 +1,19 @@
 const express = require("express");
-
+const router = express.Router();
 const {
-  createTask,
   getTasks,
-  updateTask,
+  getTask,
+  postTask,
+  putTask,
   deleteTask,
 } = require("../controllers/taskController");
+const { verifyAccessToken } = require("../middleware/index");
 
-const { validateTask } = require("../middleware/validation");
-
-const router = express.Router();
-
-router.post("/tasks", createTask, validateTask);
-router.get("/tasks", getTasks);
-router.put("/tasks/:id", updateTask, validateTask);
-router.delete("/tasks/:id", deleteTask, validateTask);
+// Routes beginning with /api/tasks
+router.get("/", verifyAccessToken, getTasks);
+router.get("/:taskId", verifyAccessToken, getTask);
+router.post("/", verifyAccessToken, postTask);
+router.put("/:taskId", verifyAccessToken, putTask);
+router.delete("/:taskId", verifyAccessToken, deleteTask);
 
 module.exports = router;
