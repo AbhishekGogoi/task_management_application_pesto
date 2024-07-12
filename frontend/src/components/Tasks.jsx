@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
 import Loader from "./utils/Loader";
 import Tooltip from "./utils/Tooltip";
@@ -10,16 +10,22 @@ const Tasks = () => {
   const [tasks, setTasks] = useState([]);
   const [fetchData, { loading }] = useFetch();
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const fetchTasks = useCallback(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const status = queryParams.get("status") || "All";
+
     const config = {
-      url: "/tasks",
+      url: `/tasks?status=${status}`,
       method: "get",
       headers: { Authorization: authState.token },
     };
     fetchData(config, { showSuccessToast: false }).then((data) =>
       setTasks(data.tasks)
     );
-  }, [authState.token, fetchData]);
+  }, [authState.token, fetchData, location.search]);
 
   useEffect(() => {
     if (!authState.isLoggedIn) return;
@@ -35,14 +41,36 @@ const Tasks = () => {
     fetchData(config).then(() => fetchTasks());
   };
 
+  const handleStatusChange = (e) => {
+    const status = e.target.value;
+    navigate(`?status=${status}`);
+  };
+
   return (
     <>
       <div className="my-2 mx-auto max-w-[700px] py-4">
-        {tasks.length !== 0 && (
-          <h2 className="my-2 ml-2 md:ml-0 text-xl">
-            Your tasks ({tasks.length})
-          </h2>
-        )}
+        <div className="flex justify-between items-center">
+          {tasks.length !== 0 && (
+            <h2 className="my-2 ml-2 md:ml-0 text-xl">
+              Your tasks ({tasks.length})
+            </h2>
+          )}
+          <div>
+            <label htmlFor="status-filter" className="mr-2">
+              Filter by status:
+            </label>
+            <select
+              id="status-filter"
+              onChange={handleStatusChange}
+              className="p-2 border rounded"
+            >
+              <option value="All">All</option>
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Done">Done</option>
+            </select>
+          </div>
+        </div>
         {loading ? (
           <Loader />
         ) : (
