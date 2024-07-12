@@ -3,7 +3,13 @@ const { validateObjectId } = require("../utils/validation");
 
 exports.getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.user.id });
+    const { status } = req.query;
+    const query = { user: req.user.id };
+    if (status && status !== "All") {
+      query.status = status;
+    }
+
+    const tasks = await Task.find(query);
     res
       .status(200)
       .json({ tasks, status: true, msg: "Tasks found successfully.." });
