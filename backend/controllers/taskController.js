@@ -48,7 +48,12 @@ exports.postTask = async (req, res) => {
         msg: "Title and description of task are required",
       });
     }
-    const task = await Task.create({ user: req.user.id, description });
+    const task = await Task.create({
+      user: req.user.id,
+      title,
+      description,
+      status,
+    });
     res
       .status(200)
       .json({ task, status: true, msg: "Task created successfully.." });
@@ -64,12 +69,10 @@ exports.putTask = async (req, res) => {
   try {
     const { title, description, status } = req.body;
     if (!title || !description) {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          msg: "Title and description of task are required",
-        });
+      return res.status(400).json({
+        status: false,
+        msg: "Title and description of task are required",
+      });
     }
 
     if (!validateObjectId(req.params.taskId)) {
@@ -91,7 +94,7 @@ exports.putTask = async (req, res) => {
 
     task = await Task.findByIdAndUpdate(
       req.params.taskId,
-      { description },
+      { title, description, status },
       { new: true }
     );
     res
